@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import com.mobius.software.telco.protocols.gtp.api.exceptions.GTPParseException;
 import com.mobius.software.telco.protocols.gtp.api.messages.GTPMessage;
 import com.mobius.software.telco.protocols.gtp.api.messages.GTPTagMessage;
+import com.mobius.software.telco.protocols.gtp.impl.GTPPacketHandler;
 
 public interface GTPServer 
 {
@@ -27,11 +28,7 @@ public interface GTPServer
 	
 	void sendMessage(GTPTagMessage message,InetSocketAddress address) throws GTPParseException;
 	
-	void start(String host,Integer port,Integer poolSize,Boolean useEpoll);
+	void start(String host,Integer port,Integer poolSize,Boolean useEpoll, GTPPacketHandler handler);
 	
 	void stop();
-	
-	void setListener(GTPListener listener);
-	
-	void setIgnoreUnknown(Boolean ignoreUnknown);
 }

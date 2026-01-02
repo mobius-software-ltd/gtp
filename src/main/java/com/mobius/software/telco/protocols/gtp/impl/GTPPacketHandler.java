@@ -15,62 +15,13 @@ GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>*/
-import java.net.InetSocketAddress;
+import com.mobius.software.telco.protocols.gtp.api.GTPListener;
 
-import org.apache.log4j.Logger;
+import io.netty.channel.ChannelInboundHandler;
 
-import com.mobius.software.telco.protocols.gtp.api.messages.GenericGTPMessage;
-import com.mobius.software.telco.protocols.gtp.impl.messages.MessageFactory;
-
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.socket.DatagramPacket;
-import io.netty.channel.ChannelHandler.Sharable;
-import io.netty.util.ReferenceCountUtil;
-
-@Sharable
-public class GTPPacketHandler extends SimpleChannelInboundHandler<DatagramPacket>
+public interface GTPPacketHandler extends ChannelInboundHandler
 {
-	private final static Logger logger = Logger.getLogger(GTPPacketHandler.class);  
+	void setGTPListener(GTPListener listener);
 	
-	private GTPServerImpl server;
-	
-	public GTPPacketHandler(GTPServerImpl server)
-	{
-		this.server=server;
-	}
-	
-	@Override
-	public void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) 
-	{
-		try
-		{			
-			try
-			{
-				InetSocketAddress address = packet.sender();
-				GenericGTPMessage message=MessageFactory.decode(packet.content(),server.getIgnoreUnknown());
-				server.packetReceived(message, address);
-			}
-			catch(Exception ex)
-			{
-				logger.error("An error occured while processing incoming packet," + ex.getMessage(),ex);
-			}
-		}
-		finally
-		{
-			ReferenceCountUtil.release(packet);			
-		}
-	}
-	
-	@Override
-	public void channelReadComplete(ChannelHandlerContext ctx) 
-	{
-		ctx.flush();
-	}
-	
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) 
-	{
-		
-	}
+	void setIgnoreUnknown(Boolean ignoreUnknown);	
 }

@@ -22,6 +22,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
+import com.mobius.software.telco.protocols.gtp.api.GTPServer;
+import com.mobius.software.telco.protocols.gtp.api.exceptions.GTPParseException;
+import com.mobius.software.telco.protocols.gtp.api.messages.GTPMessage;
+import com.mobius.software.telco.protocols.gtp.api.messages.GTPTagMessage;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -36,14 +41,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 
-import com.mobius.software.telco.protocols.gtp.api.GTPListener;
-import com.mobius.software.telco.protocols.gtp.api.GTPServer;
-import com.mobius.software.telco.protocols.gtp.api.exceptions.GTPParseException;
-import com.mobius.software.telco.protocols.gtp.api.messages.GTPMessage;
-import com.mobius.software.telco.protocols.gtp.api.messages.GTPTagMessage;
-import com.mobius.software.telco.protocols.gtp.api.messages.GenericGTPMessage;
-import com.mobius.software.telco.protocols.gtp.api.messages.v2.GTP2Message;
-
 public class GTPServerImpl implements GTPServer
 {
 	private Logger logger=Logger.getLogger(GTPServerImpl.class);
@@ -54,12 +51,8 @@ public class GTPServerImpl implements GTPServer
 	private List<Channel> serverChannels=new ArrayList<Channel>();
 	private AtomicInteger portNumber=new AtomicInteger(0);
 	
-	private GTPListener listener=null;
-	
-	private Boolean ignoreUnknown=false;
-	
 	@Override
-	public void start(String host,Integer port,Integer poolSize,Boolean useEpoll) 
+	public void start(String host,Integer port,Integer poolSize,Boolean useEpoll, GTPPacketHandler handler) 
 	{
 		if(useEpoll)
 			group = new EpollEventLoopGroup(poolSize);
@@ -86,8 +79,7 @@ public class GTPServerImpl implements GTPServer
 		if(!useEpoll)
 			maxPorts=1;
 		
-		final GTPServerImpl me=this;
-		connectionlessBootstrap.handler(new GTPPacketHandler(me));					
+		connectionlessBootstrap.handler(handler);					
 				
 		for(int i = 0; i < maxPorts; ++i)
 		{
@@ -130,39 +122,5 @@ public class GTPServerImpl implements GTPServer
 		
 		group.shutdownGracefully();
 		logger.info("GTP Server stopped");
-	}
-
-	@Override
-	public void setListener(GTPListener listener) 
-	{
-		this.listener=listener;		
-	}
-
-	protected void packetReceived(GenericGTPMessage message,InetSocketAddress address)
-	{
-		if(listener!=null)
-		{
-			if(message instanceof GTPMessage)
-				listener.onGTPMessage((GTPMessage)message, address);
-			else if(message instanceof GTPTagMessage)
-				listener.onGTPTagMessage((GTPTagMessage)message, address);
-			else if(message instanceof GTP2Message)
-				listener.onGTP2Message((GTP2Message)message, address);
-			else 
-				logger.warn("Received message with invalid format" + message);
-		}
-		else
-			logger.warn("Received incoming message,but no listener is set yet");
-	}
-
-	@Override
-	public void setIgnoreUnknown(Boolean ignoreUnknown) 
-	{
-		this.ignoreUnknown=ignoreUnknown;
-	}
-	
-	public Boolean getIgnoreUnknown()
-	{
-		return this.ignoreUnknown;
 	}
 }
