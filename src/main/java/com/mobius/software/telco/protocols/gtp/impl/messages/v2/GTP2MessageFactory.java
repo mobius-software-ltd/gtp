@@ -26,7 +26,7 @@ public class GTP2MessageFactory
 	public static GenericGTPMessage decode(byte header,ByteBuf buffer,Boolean ignoreUnknown) throws GTPParseException
 	{
 		GenericGTPMessage gtpMessage=null;
-		GTP2MessageType messageType=GTP2MessageType.fromInt(buffer.readByte());
+		GTP2MessageType messageType=GTP2MessageType.fromInt(buffer.readByte() & 0x0FF);
 		switch(messageType)
 		{
 			case ECHO_REQUEST:

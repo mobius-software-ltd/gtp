@@ -397,10 +397,14 @@ public class TLVFactory
 				result=new SequenceNumbersOfReleasedPacketsImpl();
 				break;
 			case UNKNOWN:
-				return null;
+				break;
 		}
 		
-		result.decode(buffer);
+		if(result!=null)
+			result.decode(buffer);
+		else
+			AbstractTLV.skipHeader(buffer);
+		
 		return result;
 	}
 }

@@ -25,6 +25,7 @@ import com.mobius.software.telco.protocols.gtp.api.headers.v2.SelectionModeType;
 public class SelectionModeImpl extends AbstractTLV2 implements SelectionMode 
 {
 	private SelectionModeType modeType;
+	private byte padding = (byte)0x0FC;
 	
 	@Override
 	public GTP2ElementType getElementType() 
@@ -42,7 +43,7 @@ public class SelectionModeImpl extends AbstractTLV2 implements SelectionMode
 	protected void writeValue(ByteBuf buffer) throws MissingArgumentException 
 	{
 		if(modeType!=null)
-			buffer.writeByte((modeType.getValue() & 0x03) | 0x0FC);
+			buffer.writeByte((modeType.getValue() & 0x03) | padding);
 		else
 			throw new MissingArgumentException("Selection Mode is not set");
 	}
@@ -50,7 +51,9 @@ public class SelectionModeImpl extends AbstractTLV2 implements SelectionMode
 	@Override
 	protected void readValue(ByteBuf buffer, Integer length) 
 	{
-		modeType=SelectionModeType.fromInt(buffer.readByte() & 0x03);
+		padding = buffer.readByte();
+		modeType=SelectionModeType.fromInt(padding & 0x03);
+		padding = (byte)(padding & 0x0FFFC);
 	}
 
 	@Override

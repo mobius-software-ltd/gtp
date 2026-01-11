@@ -75,4 +75,21 @@ public abstract class AbstractTLV2 implements TLV2
 		
 		readValue(buffer, length);
 	}
+	
+	public static void skipHeader(ByteBuf buffer) throws GTPParseException 
+	{
+		Integer length=0;
+		if(buffer.readableBytes()<3)
+			throw new InvalidMessageException("not enough bytes found in message");
+		
+		length|=(buffer.readByte() & 0x0FF)<<8;
+		length|=(buffer.readByte() & 0x0FF);
+		//skip instance
+		buffer.skipBytes(1);
+		
+		if(buffer.readableBytes()<length)
+			throw new InvalidMessageException("not enough bytes found in message");
+		
+		buffer.skipBytes(length);
+	}
 }

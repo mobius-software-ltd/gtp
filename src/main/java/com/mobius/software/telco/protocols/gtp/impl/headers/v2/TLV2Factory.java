@@ -611,7 +611,7 @@ public class TLV2Factory
 				result=new UnauthenticatedIMSIImpl();
 				break;
 			case UNKNOWN:
-				return null;
+				break;
 			case UP_FUNCTION_SELECTION_INDICATION_FLAGS:
 				result=new UPFunctionSelectionIndicationFlagsImpl();
 				break;
@@ -630,6 +630,8 @@ public class TLV2Factory
 		
 		if(result!=null)
 			result.decode(buffer);
+		else
+			AbstractTLV2.skipHeader(buffer);
 		
 		return result;
 	}

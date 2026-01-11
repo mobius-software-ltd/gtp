@@ -28,7 +28,7 @@ public class GTPMessageFactory
 	{
 		GenericGTPMessage gtpMessage=null;
 		ProtocolType packetType=ProtocolType.fromInt((header >>4) & 0x01);
-		MessageType messageType=MessageType.fromInt(buffer.readByte());
+		MessageType messageType=MessageType.fromInt(buffer.readByte() & 0x0FF);
 		switch(messageType)
 		{
 			case ECHO_REQUEST:

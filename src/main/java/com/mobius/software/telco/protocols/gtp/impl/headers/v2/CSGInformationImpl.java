@@ -40,7 +40,7 @@ public class CSGInformationImpl extends AbstractTLV2 implements CSGInformation
 	@Override
 	public Integer getLength() 
 	{
-		return 7;
+		return 8;
 	}
 
 	@Override
@@ -54,8 +54,7 @@ public class CSGInformationImpl extends AbstractTLV2 implements CSGInformation
 		
 		ni.encode(buffer);
 		
-		buffer.writeByte((csgID>>16 ) & 0x07);
-		buffer.writeShort(csgID);
+		buffer.writeInt(csgID & 0x07000000);
 		byte currByte=0;
 		if(csgAccessMode!=null)
 			currByte|=((csgAccessMode.getValue()<<6) & 0xC0);
@@ -75,8 +74,7 @@ public class CSGInformationImpl extends AbstractTLV2 implements CSGInformation
 		this.ni=new NetworkIdentityImpl();
 		this.ni.decode(buffer);
 		
-		csgID=buffer.readByte()<<16 & 0x070000;
-		csgID|=buffer.readShort();
+		csgID=buffer.readInt() & 0x07000000;
 		
 		byte currValue=buffer.readByte();
 		csgMembership=CSGMembership.fromInt(currValue & 0x01);
