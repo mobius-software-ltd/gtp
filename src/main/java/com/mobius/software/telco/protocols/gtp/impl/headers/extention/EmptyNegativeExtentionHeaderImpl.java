@@ -17,6 +17,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>*/
 import io.netty.buffer.ByteBuf;
 
+import com.mobius.software.telco.protocols.gtp.api.exceptions.GTPParseException;
 import com.mobius.software.telco.protocols.gtp.api.headers.ExtentionHeaderType;
 import com.mobius.software.telco.protocols.gtp.impl.headers.AbstractExtentionHeader;
 
@@ -42,5 +43,15 @@ public class EmptyNegativeExtentionHeaderImpl extends AbstractExtentionHeader
 	@Override
 	protected void readValue(ByteBuf buffer,Integer length) 
 	{		
+	}
+	
+	@Override
+	public void decode(ByteBuf buffer) throws GTPParseException 
+	{	
+	}
+	
+	@Override
+	public void encode(ByteBuf buffer) throws GTPParseException
+	{	
 	}
 }

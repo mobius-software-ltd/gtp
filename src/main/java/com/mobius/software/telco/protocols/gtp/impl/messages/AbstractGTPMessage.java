@@ -175,13 +175,10 @@ public abstract class AbstractGTPMessage implements GTPMessage
 	protected Integer getExtraHeadersLength() 
 	{
 		Integer result=0;
-		if(sequenceNumber!=null)
-			result+=2;
+		if(sequenceNumber!=null || npdu!=null || extentionsHeaders!=null)
+			result+=3;
 		
-		if(npdu!=null)
-			result+=1;
-		
-		if(extentionsHeaders!=null)
+		if(extentionsHeaders!=null && extentionsHeaders.size()>0)
 		{
 			for(ExtentionHeader curr:extentionsHeaders)
 			{
@@ -193,7 +190,7 @@ public abstract class AbstractGTPMessage implements GTPMessage
 			}
 		}
 		else
-			result+=2;
+			result+=1;
 		
 		return result;
 	}
@@ -220,10 +217,10 @@ public abstract class AbstractGTPMessage implements GTPMessage
 		
 		buffer.writeInt(teid.intValue());
 		
-		if(hasSequenceNumber)
+		if(hasSequenceNumber || hasNPDU || hasExtentionHeaders)
 			buffer.writeShort(sequenceNumber.shortValue());
 		
-		if(hasNPDU)
+		if(hasNPDU || hasSequenceNumber || hasExtentionHeaders)
 			buffer.writeByte(npdu.byteValue());
 		
 		if(hasExtentionHeaders)
@@ -240,29 +237,22 @@ public abstract class AbstractGTPMessage implements GTPMessage
 				emptyHeader.encode(buffer);
 			}
 		}
-		else
-		{
-			if(extentionsHeaders!=null && extentionsHeaders.size()!=0)
-				extentionsHeaders.get(0).encode(buffer);
-			else
-			{
-				EmptyExtentionHeaderImpl emptyHeader=new EmptyExtentionHeaderImpl();
-				emptyHeader.encode(buffer);
-			}
-		}
+		else if(hasSequenceNumber || hasExtentionHeaders)
+			buffer.writeByte(0);
 	}
 
 	protected Integer readExtraHeaders(ByteBuf buffer) throws GTPParseException 
 	{
 		Integer usedBytes=0;
 		teid=buffer.readUnsignedInt();
-		if(hasSequenceNumber)
+		if(hasNPDU || hasSequenceNumber || hasExtentionHeaders)
 		{
 			usedBytes+=2;
 			sequenceNumber=buffer.readUnsignedShort();
 		}
 		
-		if(hasNPDU)
+		
+		if(hasNPDU || hasSequenceNumber || hasExtentionHeaders)
 		{
 			usedBytes+=1;
 			npdu=buffer.readByte() & 0x0FF;
@@ -271,7 +261,6 @@ public abstract class AbstractGTPMessage implements GTPMessage
 		extentionsHeaders=new ArrayList<ExtentionHeader>();
 		if(hasExtentionHeaders)
 		{
-			usedBytes+=1;
 			ExtentionHeader header;
 			do
 			{
@@ -279,17 +268,16 @@ public abstract class AbstractGTPMessage implements GTPMessage
 				if(header.getLength()!=0)
 					usedBytes+=4*header.getLength();
 				else
-					usedBytes+=2;
+					usedBytes+=1;
 				
 				extentionsHeaders.add(header);
 			}
 			while(header.getExtentionHeaderType()!=ExtentionHeaderType.EMPTY && header.getExtentionHeaderType()!=ExtentionHeaderType.EMPTY_NEGATIVE);			
 		}
-		else 
+		else if(hasSequenceNumber || hasNPDU)
 		{
-			ExtentionHeader header=ExtentionHeaderFactory.decode(buffer);
-			extentionsHeaders.add(header);
-			usedBytes+=2;
+			usedBytes+=1;
+			buffer.skipBytes(1);
 		}
 		
 		return usedBytes;
