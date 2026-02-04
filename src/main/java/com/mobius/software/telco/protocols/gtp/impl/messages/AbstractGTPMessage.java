@@ -310,7 +310,7 @@ public abstract class AbstractGTPMessage implements GTPMessage
 	{
 		int length=buffer.readUnsignedShort();
 		length-=readExtraHeaders(buffer);
-		while(length>0)
+		while(length>0 && buffer.readableBytes()>0)
 		{
 			TLV1 currTLV=TLVFactory.decode(buffer);
 			if(currTLV!=null)

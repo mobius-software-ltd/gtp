@@ -221,7 +221,7 @@ public abstract class AbstractGTP2Message implements GTP2Message
 	{
 		int length=buffer.readUnsignedShort();
 		length-=readExtraHeaders(buffer);
-		while(length>0)
+		while(length>0 && buffer.readableBytes()>0)
 		{
 			TLV2 currTLV=TLV2Factory.decode(getMessageType(), buffer);
 			if(currTLV!=null)

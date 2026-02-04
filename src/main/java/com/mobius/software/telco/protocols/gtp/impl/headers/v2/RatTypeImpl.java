@@ -25,6 +25,7 @@ import com.mobius.software.telco.protocols.gtp.api.headers.v2.RatType;
 public class RatTypeImpl extends AbstractTLV2 implements RatType 
 {
 	private Rat rat;
+	int realLength = 1;
 	
 	@Override
 	public GTP2ElementType getElementType() 
@@ -35,7 +36,7 @@ public class RatTypeImpl extends AbstractTLV2 implements RatType
 	@Override
 	public Integer getLength() 
 	{
-		return 1;
+		return realLength;
 	}
 
 	@Override
@@ -50,7 +51,10 @@ public class RatTypeImpl extends AbstractTLV2 implements RatType
 	@Override
 	protected void readValue(ByteBuf buffer, Integer length) 
 	{
+		realLength = length;
 		rat=Rat.fromInt(buffer.readByte() & 0x0FF);
+		if(length>1)
+			buffer.skipBytes(length-1);
 	}
 
 	@Override

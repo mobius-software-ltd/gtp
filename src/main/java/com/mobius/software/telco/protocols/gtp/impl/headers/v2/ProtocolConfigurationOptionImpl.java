@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 import com.mobius.software.telco.protocols.gtp.api.exceptions.MissingArgumentException;
 import com.mobius.software.telco.protocols.gtp.api.headers.v2.ConfigurationProtocol;
@@ -31,6 +32,7 @@ public class ProtocolConfigurationOptionImpl extends AbstractTLV2 implements Pro
 {
 	private List<ProtocolConfigurationOptionRecord> records;
 	private ConfigurationProtocol configurationProtocol;
+	private int skippedBytes = 0;
 	
 	@Override
 	public GTP2ElementType getElementType() 
@@ -41,7 +43,7 @@ public class ProtocolConfigurationOptionImpl extends AbstractTLV2 implements Pro
 	@Override
 	public Integer getLength() 
 	{
-		Integer length=1;
+		Integer length=1 + skippedBytes;
 		if(records!=null)
 			for(ProtocolConfigurationOptionRecord record:records)
 				length+=3+record.getLength();
@@ -71,6 +73,12 @@ public class ProtocolConfigurationOptionImpl extends AbstractTLV2 implements Pro
 				buffer.writeByte(currOption.getLength());
 				buffer.writeBytes(currOption.getProtocolData());
 			}
+			
+			if(skippedBytes>0)
+			{
+				for(int i=0;i<skippedBytes;i++)
+					buffer.writeByte(0);
+			}
 		}
 		else
 			throw new MissingArgumentException("Records are not set");
@@ -84,12 +92,23 @@ public class ProtocolConfigurationOptionImpl extends AbstractTLV2 implements Pro
 		while(length>1)
 		{
 			ProtocolConfigurationOptionRecordImpl currRecord=new ProtocolConfigurationOptionRecordImpl();
-			currRecord.setProtocol(Protocol.fromInt(buffer.readUnsignedShort()));
-			int innerLength=buffer.readByte() & 0x0FF;
-			currRecord.setProtocolData(buffer.slice(buffer.readerIndex(), innerLength));
-			buffer.skipBytes(innerLength);
-			length-=3+innerLength;
-			records.add(currRecord);
+			int currProtocol = buffer.readUnsignedShort();
+			currRecord.setProtocol(Protocol.fromInt(currProtocol));
+			if(currRecord.getProtocol()!=Protocol.UNKOWN)
+			{
+				int innerLength=buffer.readByte() & 0x0FF;
+				currRecord.setProtocolData(buffer.slice(buffer.readerIndex(), innerLength));
+				buffer.skipBytes(innerLength);
+				length-=3+innerLength;
+				records.add(currRecord);
+			}
+			else
+			{
+				skippedBytes = length-3;
+				buffer.skipBytes(length-3);
+				length=0;
+				
+			}			
 		}
 	}
 
